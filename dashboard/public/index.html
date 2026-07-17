@@ -1,0 +1,1893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QueueCTL | Advanced Background Job Control Panel</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-dark: #070913;
+      --bg-card: rgba(16, 22, 42, 0.65);
+      --bg-card-hover: rgba(26, 34, 62, 0.75);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.15);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      
+      --brand: #6c63ff;
+      --brand-glow: rgba(108, 99, 255, 0.4);
+      --accent: #00d9ff;
+      --success: #00e676;
+      --warning: #ffd740;
+      --error: #ff5252;
+      --dead: #ff1744;
+      
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding: 1.5rem;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(108, 99, 255, 0.15) 0px, transparent 40%),
+        radial-gradient(at 100% 100%, rgba(0, 217, 255, 0.08) 0px, transparent 40%),
+        radial-gradient(at 50% 50%, rgba(255, 82, 82, 0.03) 0px, transparent 50%);
+      background-attachment: fixed;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-dark);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .container {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--brand), var(--accent));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.4rem;
+      color: white;
+      box-shadow: 0 0 20px var(--brand-glow);
+    }
+
+    .title-section h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(to right, #ffffff, #b388ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .title-section p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.1rem;
+    }
+
+    .actions-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    /* Buttons */
+    .btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: white;
+      padding: 0.6rem 1.1rem;
+      border-radius: 10px;
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--border-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--brand), #5b53e6);
+      border-color: var(--brand);
+      box-shadow: 0 4px 15px rgba(108, 99, 255, 0.25);
+    }
+
+    .btn.primary:hover {
+      box-shadow: 0 6px 20px rgba(108, 99, 255, 0.4);
+      filter: brightness(1.1);
+    }
+
+    .btn.secondary {
+      background: rgba(0, 217, 255, 0.08);
+      border-color: rgba(0, 217, 255, 0.25);
+      color: #00d9ff;
+    }
+
+    .btn.secondary:hover {
+      background: rgba(0, 217, 255, 0.15);
+      box-shadow: 0 4px 15px rgba(0, 217, 255, 0.15);
+    }
+
+    .btn.danger {
+      background: rgba(255, 82, 82, 0.08);
+      border-color: rgba(255, 82, 82, 0.2);
+      color: var(--error);
+    }
+
+    .btn.danger:hover {
+      background: rgba(255, 82, 82, 0.15);
+      border-color: rgba(255, 82, 82, 0.35);
+    }
+
+    /* Grid Layouts */
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: 3fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 1100px) {
+      .dashboard-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: var(--text-muted);
+    }
+
+    .stat-card.workers::after { background: var(--brand); }
+    .stat-card.pending::after { background: var(--warning); }
+    .stat-card.processing::after { background: var(--accent); }
+    .stat-card.completed::after { background: var(--success); }
+    .stat-card.failed::after { background: var(--error); }
+    .stat-card.dead::after { background: var(--dead); }
+
+    .stat-card:hover {
+      transform: translateY(-3px);
+      background: var(--bg-card-hover);
+      border-color: var(--border-hover);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      line-height: 1.2;
+    }
+
+    /* Metrics & Progress Bar Section */
+    .ratio-panel {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .ratio-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+    }
+
+    .ratio-header h3 {
+      font-weight: 700;
+    }
+
+    .ratio-bar {
+      height: 10px;
+      border-radius: 5px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+    }
+
+    .ratio-bar-segment {
+      height: 100%;
+      transition: width 0.4s ease;
+    }
+
+    .ratio-bar-segment.pending { background-color: var(--warning); }
+    .ratio-bar-segment.processing { background-color: var(--accent); }
+    .ratio-bar-segment.completed { background-color: var(--success); }
+    .ratio-bar-segment.failed { background-color: var(--error); }
+    .ratio-bar-segment.dead { background-color: var(--dead); }
+
+    .ratio-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.75rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--text-muted);
+    }
+
+    .legend-color {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+    }
+
+    .legend-color.pending { background: var(--warning); }
+    .legend-color.processing { background: var(--accent); }
+    .legend-color.completed { background: var(--success); }
+    .legend-color.failed { background: var(--error); }
+    .legend-color.dead { background: var(--dead); }
+
+    /* Left Content Panels */
+    .left-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .content-panel {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .panel-header h2 {
+      font-size: 1.2rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .panel-header h2 svg {
+      width: 20px;
+      height: 20px;
+      color: var(--brand);
+    }
+
+    .filter-group {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.5rem 0.85rem;
+      color: white;
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      outline: none;
+      min-width: 200px;
+      transition: all 0.3s;
+    }
+
+    .search-box:focus {
+      border-color: var(--brand);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .filter-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+      padding: 0.45rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+
+    .filter-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+    }
+
+    .filter-btn.active {
+      background: var(--brand);
+      border-color: var(--brand);
+      color: white;
+      box-shadow: 0 2px 10px rgba(108, 99, 255, 0.25);
+    }
+
+    /* Jobs Table */
+    .table-container {
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    th {
+      background: rgba(255, 255, 255, 0.02);
+      padding: 0.85rem 1rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr {
+      transition: background-color 0.25s;
+    }
+
+    tr:hover td {
+      background-color: rgba(255, 255, 255, 0.015);
+    }
+
+    .job-id-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .priority-badge {
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      background: rgba(255, 215, 64, 0.1);
+      color: var(--warning);
+      border: 1px solid rgba(255, 215, 64, 0.2);
+    }
+
+    .priority-badge.normal {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+    }
+
+    .job-id {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .job-command {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      max-width: 250px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.02);
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.2px;
+    }
+
+    .badge::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+
+    .badge.pending { background: rgba(255, 215, 64, 0.1); color: var(--warning); }
+    .badge.pending::before { background: var(--warning); }
+
+    .badge.processing { background: rgba(0, 217, 255, 0.1); color: var(--accent); }
+    .badge.processing::before { background: var(--accent); }
+
+    .badge.completed { background: rgba(0, 230, 118, 0.1); color: var(--success); }
+    .badge.completed::before { background: var(--success); }
+
+    .badge.failed { background: rgba(255, 82, 82, 0.1); color: var(--error); }
+    .badge.failed::before { background: var(--error); }
+
+    .badge.dead { background: rgba(255, 23, 68, 0.1); color: var(--dead); }
+    .badge.dead::before { background: var(--dead); }
+
+    .action-btn-sm {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+      color: white;
+      padding: 0.35rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      transition: all 0.2s;
+    }
+
+    .action-btn-sm:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--border-hover);
+    }
+
+    .action-btn-sm.resurrect {
+      background: rgba(108, 99, 255, 0.12);
+      border-color: rgba(108, 99, 255, 0.3);
+      color: #b388ff;
+    }
+
+    .action-btn-sm.resurrect:hover {
+      background: var(--brand);
+      color: white;
+      box-shadow: 0 0 10px rgba(108, 99, 255, 0.3);
+    }
+
+    .action-btn-sm.delete {
+      background: rgba(255, 82, 82, 0.08);
+      border-color: rgba(255, 82, 82, 0.25);
+      color: var(--error);
+    }
+
+    .action-btn-sm.delete:hover {
+      background: var(--error);
+      color: white;
+      box-shadow: 0 0 10px rgba(255, 82, 82, 0.3);
+    }
+
+    /* Right Sidebar Section */
+    .sidebar-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* Performance Gauge Visual */
+    .metrics-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .gauge-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      margin: 0.5rem 0;
+    }
+
+    .gauge-svg {
+      width: 140px;
+      height: 140px;
+      transform: rotate(-90deg);
+    }
+
+    .gauge-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.03);
+      stroke-width: 10;
+    }
+
+    .gauge-fill {
+      fill: none;
+      stroke: url(#gauge-gradient);
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke-dasharray: 377;
+      stroke-dashoffset: 377;
+      transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .gauge-content {
+      position: absolute;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .gauge-percent {
+      font-size: 1.8rem;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      background: linear-gradient(135deg, var(--accent), var(--success));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .gauge-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-top: -2px;
+    }
+
+    .latency-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      width: 100%;
+    }
+
+    .latency-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0.75rem;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      font-size: 0.8rem;
+    }
+
+    .latency-item span:first-child {
+      color: var(--text-muted);
+    }
+
+    .latency-item span:last-child {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    /* Workers Panel */
+    .workers-panel {
+      flex: 1;
+    }
+
+    .workers-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .worker-node {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.25s;
+    }
+
+    .worker-node:hover {
+      border-color: rgba(108, 99, 255, 0.3);
+      background: rgba(108, 99, 255, 0.02);
+    }
+
+    .worker-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .worker-pid {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .worker-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--success);
+      display: inline-block;
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    .worker-pulse.stopping {
+      background-color: var(--warning);
+      box-shadow: 0 0 8px var(--warning);
+      animation: pulse 1s infinite;
+    }
+
+    .worker-pulse.offline {
+      background-color: var(--text-muted);
+      box-shadow: none;
+    }
+
+    .worker-meta {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(4, 5, 12, 0.8);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal {
+      background: #0d111d;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      width: 90%;
+      max-width: 550px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+      transform: scale(0.95);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      overflow: hidden;
+    }
+
+    .modal.large {
+      max-width: 800px;
+    }
+
+    .modal-overlay.active .modal {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      background: linear-gradient(to right, white, #b388ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .close-modal {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .close-modal:hover {
+      color: white;
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    /* Modal Form Control */
+    .form-group {
+      margin-bottom: 1.15rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .form-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-input {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.65rem 0.85rem;
+      color: white;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      outline: none;
+      transition: all 0.25s;
+    }
+
+    .form-input:focus {
+      border-color: var(--brand);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .form-input.code {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: #9cdcfe;
+    }
+
+    .form-footer {
+      padding: 1.25rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      background: rgba(0, 0, 0, 0.15);
+    }
+
+    /* Log Terminal Viewer Emulator */
+    .terminal-container {
+      background: #05070c;
+      border: 1px solid #1c2135;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.6);
+      margin-bottom: 1rem;
+    }
+
+    .terminal-header {
+      background: #0f121d;
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid #1c2135;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .terminal-controls {
+      display: flex;
+      gap: 0.35rem;
+    }
+
+    .terminal-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .terminal-dot.close { background-color: #ff5f56; }
+    .terminal-dot.minimize { background-color: #ffbd2e; }
+    .terminal-dot.maximize { background-color: #27c93f; }
+
+    .terminal-title {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .terminal-body {
+      padding: 1rem;
+      max-height: 250px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .terminal-row {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+
+    .terminal-row.stdout {
+      color: #b5cea8; /* soft green */
+    }
+
+    .terminal-row.stderr {
+      color: #f44747; /* soft red */
+    }
+
+    .terminal-row.attempt-banner {
+      color: #569cd6; /* indigo blue */
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+      padding-bottom: 0.25rem;
+      margin-top: 0.5rem;
+      font-weight: 700;
+    }
+
+    .status-indicator {
+      font-size: 0.65rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 6px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .status-indicator.live {
+      background-color: rgba(0, 230, 118, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(0, 230, 118, 0.3);
+    }
+    .status-indicator.disconnected {
+      background-color: rgba(255, 82, 82, 0.15);
+      color: var(--error);
+      border: 1px solid rgba(255, 82, 82, 0.3);
+      animation: pulse 1s infinite;
+    }
+
+    /* Notification Toast */
+    #notification-toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: rgba(12, 17, 33, 0.95);
+      border: 1px solid var(--brand);
+      padding: 0.85rem 1.25rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(108, 99, 255, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      z-index: 2000;
+      transform: translateY(120px);
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      font-size: 0.85rem;
+    }
+
+    #notification-toast.show {
+      transform: translateY(0);
+    }
+
+    /* Dropdown CSS Menu */
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      background-color: #0d111d;
+      min-width: 160px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      z-index: 10;
+      overflow: hidden;
+      margin-top: 0.25rem;
+    }
+
+    .dropdown-content button {
+      background: none;
+      border: none;
+      color: var(--text-main);
+      padding: 0.65rem 1rem;
+      text-align: left;
+      width: 100%;
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .dropdown-content button:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .dropdown:hover .dropdown-content {
+      display: block;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem;
+      color: var(--text-muted);
+      font-style: italic;
+      font-size: 0.85rem;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+  
+  <div class="container">
+    
+    <!-- Top Header -->
+    <header>
+      <div class="brand-section">
+        <div class="logo">Q</div>
+        <div class="title-section">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <h1>QueueCTL</h1>
+            <span id="connection-status" class="status-indicator live">Live</span>
+          </div>
+          <p>Local-First Background Job Queue Engine</p>
+        </div>
+      </div>
+      
+      <div class="actions-bar">
+        <!-- Purge Dropdown Menu -->
+        <div class="dropdown">
+          <button class="btn danger">
+            <svg style="width:16px;height:16px" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            <span>Purge Queue</span>
+          </button>
+          <div class="dropdown-content">
+            <button onclick="requestPurge('completed')">Purge Completed</button>
+            <button onclick="requestPurge('dead')">Purge Dead (DLQ)</button>
+            <button onclick="requestPurge('all')" style="color:var(--error);font-weight:700;">Purge All Jobs</button>
+          </div>
+        </div>
+
+        <button class="btn secondary" onclick="spawnWorker()">
+          <svg style="width:16px;height:16px" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <span>Spawn Worker</span>
+        </button>
+
+        <button class="btn primary" onclick="openEnqueueModal()">
+          <svg style="width:16px;height:16px" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
+          <span>Enqueue Job</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Top Dashboard Stats -->
+    <section class="stats-grid">
+      <div class="stat-card workers">
+        <span class="stat-label">Active Workers</span>
+        <span class="stat-value" id="count-workers">0</span>
+      </div>
+      <div class="stat-card pending">
+        <span class="stat-label">Pending</span>
+        <span class="stat-value" id="count-pending">0</span>
+      </div>
+      <div class="stat-card processing">
+        <span class="stat-label">Processing</span>
+        <span class="stat-value" id="count-processing">0</span>
+      </div>
+      <div class="stat-card completed">
+        <span class="stat-label">Completed</span>
+        <span class="stat-value" id="count-completed">0</span>
+      </div>
+      <div class="stat-card failed">
+        <span class="stat-label">Failed (Retrying)</span>
+        <span class="stat-value" id="count-failed">0</span>
+      </div>
+      <div class="stat-card dead">
+        <span class="stat-label">Dead (DLQ)</span>
+        <span class="stat-value" id="count-dead">0</span>
+      </div>
+    </section>
+
+    <!-- Ratio Distribution Bar Panel -->
+    <section class="ratio-panel">
+      <div class="ratio-header">
+        <h3>Queue Distribution Ratio</h3>
+        <span class="stat-label" id="total-jobs-label" style="color:var(--accent);">Total Jobs: 0</span>
+      </div>
+      <div class="ratio-bar" id="distribution-bar">
+        <!-- Dynamic rendering -->
+      </div>
+      <div class="ratio-legend">
+        <div class="legend-item"><div class="legend-color pending"></div><span>Pending</span></div>
+        <div class="legend-item"><div class="legend-color processing"></div><span>Processing</span></div>
+        <div class="legend-item"><div class="legend-color completed"></div><span>Completed</span></div>
+        <div class="legend-item"><div class="legend-color failed"></div><span>Failed</span></div>
+        <div class="legend-item"><div class="legend-color dead"></div><span>Dead (DLQ)</span></div>
+      </div>
+    </section>
+
+    <!-- Dashboard Core Layout -->
+    <div class="dashboard-layout">
+      
+      <!-- Left side: Job Lists Panel -->
+      <main class="left-section">
+        <section class="content-panel">
+          <div class="panel-header">
+            <h2>
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+              <span>Background Job Queue</span>
+            </h2>
+            <div class="filter-group">
+              <input type="text" id="search-input" class="search-box" placeholder="Search ID or command...">
+              <button class="filter-btn active" data-filter="all">All</button>
+              <button class="filter-btn" data-filter="pending">Pending</button>
+              <button class="filter-btn" data-filter="processing">Processing</button>
+              <button class="filter-btn" data-filter="completed">Completed</button>
+              <button class="filter-btn" data-filter="failed">Failed</button>
+              <button class="filter-btn" data-filter="dead">Dead</button>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Job ID</th>
+                  <th>Command</th>
+                  <th>Status</th>
+                  <th>Retries</th>
+                  <th>Timeout</th>
+                  <th>Scheduled</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="jobs-table-body">
+                <tr>
+                  <td colspan="7" class="empty-state">Loading jobs...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+
+      <!-- Right side: Sidebar metrics & Workers -->
+      <aside class="sidebar-section">
+        
+        <!-- Performance Metrics -->
+        <section class="content-panel metrics-panel">
+          <div class="panel-header">
+            <h2>
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10a2 2 0 01-2 2h-2a2 2 0 01-2-2zm9-10v10a2 2 0 01-2 2h-2a2 2 0 01-2-2V9a2 2 0 012-2h2a2 2 0 012 2z"></path></svg>
+              <span>Performance</span>
+            </h2>
+          </div>
+
+          <!-- Circular Success Rate Gauge -->
+          <div class="gauge-wrapper">
+            <svg class="gauge-svg" viewBox="0 0 130 130">
+              <defs>
+                <linearGradient id="gauge-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color: var(--accent);" />
+                  <stop offset="100%" style="stop-color: var(--success);" />
+                </linearGradient>
+              </defs>
+              <circle class="gauge-bg" cx="65" cy="65" r="60" />
+              <circle class="gauge-fill" id="metrics-success-gauge" cx="65" cy="65" r="60" />
+            </svg>
+            <div class="gauge-content">
+              <span class="gauge-percent" id="metrics-success-rate">0%</span>
+              <span class="gauge-label">Success</span>
+            </div>
+          </div>
+
+          <!-- Latency lists -->
+          <div class="latency-list">
+            <div class="latency-item">
+              <span>Avg Latency</span>
+              <span id="metrics-avg-latency">0ms</span>
+            </div>
+            <div class="latency-item">
+              <span>Max Latency</span>
+              <span id="metrics-max-latency">0ms</span>
+            </div>
+            <div class="latency-item">
+              <span>Total Attempts</span>
+              <span id="metrics-attempts">0</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Queue Settings Configuration Panel -->
+        <section class="content-panel config-panel">
+          <div class="panel-header">
+            <h2>
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+              <span>Queue Settings</span>
+            </h2>
+          </div>
+          <div class="latency-list" style="margin-top: 0.5rem; gap: 0.8rem;">
+            <div class="latency-item" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
+              <span style="font-weight: 500;">Max Retries</span>
+              <div style="display: flex; gap: 0.35rem; align-items: center;">
+                <input type="number" id="config-max-retries" style="width: 55px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.25rem 0.35rem; color: white; text-align: center; font-family: var(--font-mono); font-size: 0.8rem;" min="0" max="10">
+                <button class="action-btn-sm" style="padding: 0.25rem 0.5rem;" onclick="saveConfig('max-retries')">Save</button>
+              </div>
+            </div>
+            <div class="latency-item" style="padding-top: 0.2rem;">
+              <span style="font-weight: 500;">Backoff Base</span>
+              <div style="display: flex; gap: 0.35rem; align-items: center;">
+                <input type="number" id="config-backoff-base" style="width: 55px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.25rem 0.35rem; color: white; text-align: center; font-family: var(--font-mono); font-size: 0.8rem;" min="1.1" max="10" step="0.1">
+                <button class="action-btn-sm" style="padding: 0.25rem 0.5rem;" onclick="saveConfig('backoff-base')">Save</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Workers Management Panel -->
+        <section class="content-panel workers-panel">
+          <div class="panel-header">
+            <h2>
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+              <span>Worker Threads</span>
+            </h2>
+          </div>
+          
+          <div class="workers-list" id="workers-container">
+            <div class="empty-state">No workers online.</div>
+          </div>
+        </section>
+
+      </aside>
+
+    </div>
+
+  </div>
+
+  <!-- Modal: Enqueue Job Form -->
+  <div class="modal-overlay" id="enqueue-modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">Enqueue Background Job</span>
+        <button class="close-modal" onclick="closeEnqueueModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="enqueue-form">
+          <div class="form-group">
+            <label class="form-label" for="form-job-id">Job ID</label>
+            <input class="form-input" type="text" id="form-job-id" placeholder="e.g. daily-backup-task" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="form-job-command">Execution Command (Shell)</label>
+            <input class="form-input code" type="text" id="form-job-command" placeholder="e.g. node -e 'console.log(\'hello\')'" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="form-job-priority">Priority</label>
+              <input class="form-input" type="number" id="form-job-priority" value="0" min="0" max="100">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="form-job-retries">Max Retries</label>
+              <input class="form-input" type="number" id="form-job-retries" value="3" min="0" max="10">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="form-job-timeout">Timeout (seconds)</label>
+              <input class="form-input" type="number" id="form-job-timeout" placeholder="None" min="1">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="form-job-delay">Scheduled Delay (ISO timestamp / run_at)</label>
+              <input class="form-input" type="text" id="form-job-delay" placeholder="e.g. 2026-07-17T21:00:00Z">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="form-footer">
+        <button class="btn" onclick="closeEnqueueModal()">Cancel</button>
+        <button class="btn primary" onclick="submitEnqueueJob()">Enqueue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Terminal Log Viewer -->
+  <div class="modal-overlay" id="log-modal-overlay">
+    <div class="modal large">
+      <div class="modal-header">
+        <span class="modal-title" id="log-modal-title">Job Console Output Logs</span>
+        <button class="close-modal" onclick="closeLogModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="terminal-container">
+          <div class="terminal-header">
+            <div class="terminal-controls">
+              <div class="terminal-dot close"></div>
+              <div class="terminal-dot minimize"></div>
+              <div class="terminal-dot maximize"></div>
+            </div>
+            <div class="terminal-title">bash - logviewer@queuectl</div>
+            <div style="width: 40px"></div>
+          </div>
+          <div class="terminal-body" id="log-modal-terminal">
+            <!-- Terminal rows loaded dynamically -->
+          </div>
+        </div>
+      </div>
+      <div class="form-footer">
+        <button class="btn secondary" id="log-copy-btn">Copy Output</button>
+        <button class="btn" onclick="closeLogModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="notification-toast">
+    <span id="notification-icon" style="font-weight: 700; color: var(--success);">&#x2714;</span>
+    <span id="notification-text">Action completed successfully.</span>
+  </div>
+
+  <!-- Script Logic -->
+  <script>
+    let activeFilter = 'all';
+    let searchQuery = '';
+    let currentJobs = [];
+    let currentStats = null;
+    let currentWorkers = [];
+    let activeLogsText = '';
+
+    // Initialize Page
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchData();
+      loadConfigs();
+      setInterval(fetchData, 2000);
+
+      // Search field handler
+      document.getElementById('search-input').addEventListener('input', (e) => {
+        searchQuery = e.target.value.toLowerCase();
+        renderJobsTable();
+      });
+
+      // Filter tabs handler
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+          e.target.classList.add('active');
+          activeFilter = e.target.dataset.filter;
+          renderJobsTable();
+        });
+      });
+
+      // Terminal copy handler
+      document.getElementById('log-copy-btn').addEventListener('click', () => {
+        navigator.clipboard.writeText(activeLogsText);
+        showNotification('Logs copied to clipboard.', 'info');
+      });
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeEnqueueModal();
+          closeLogModal();
+        }
+        if (e.key === '/' && document.activeElement !== document.getElementById('search-input') && document.activeElement.tagName !== 'INPUT') {
+          e.preventDefault();
+          const searchInput = document.getElementById('search-input');
+          searchInput.focus();
+          searchInput.select();
+        }
+      });
+    });
+
+    // Main fetch loop
+    async function fetchData() {
+      // Save previous states to detect transitions
+      const previousJobsMap = new Map(currentJobs.map(j => [j.id, j.state]));
+
+      try {
+        const [statsRes, jobsRes, workersRes, metricsRes] = await Promise.all([
+          fetch('/api/status'),
+          fetch('/api/jobs'),
+          fetch('/api/workers'),
+          fetch('/api/metrics')
+        ]);
+        
+        currentStats = await statsRes.json();
+        currentJobs = await jobsRes.json();
+        currentWorkers = await workersRes.json();
+        const metrics = await metricsRes.json();
+
+        // Update connection status
+        const statusEl = document.getElementById('connection-status');
+        statusEl.textContent = 'Live';
+        statusEl.className = 'status-indicator live';
+
+        // Diff and toast on state changes
+        if (previousJobsMap.size > 0) {
+          for (const job of currentJobs) {
+            const prevState = previousJobsMap.get(job.id);
+            if (prevState && prevState !== job.state) {
+              if (job.state === 'completed') {
+                showNotification(`Job "${job.id}" completed successfully!`, 'success');
+              } else if (job.state === 'failed') {
+                showNotification(`Job "${job.id}" failed. Retrying...`, 'warning');
+              } else if (job.state === 'dead') {
+                showNotification(`Job "${job.id}" moved to Dead Letter Queue (DLQ).`, 'error');
+              }
+            }
+          }
+        }
+
+        updateStatsUI();
+        updateMetricsUI(metrics);
+        updateWorkersUI();
+        renderJobsTable();
+      } catch (err) {
+        console.error('Failed to poll dashboard data:', err);
+        const statusEl = document.getElementById('connection-status');
+        statusEl.textContent = 'Disconnected';
+        statusEl.className = 'status-indicator disconnected';
+      }
+    }
+
+    // Config loaders and savers
+    async function loadConfigs() {
+      try {
+        const res = await fetch('/api/config');
+        const configs = await res.json();
+        document.getElementById('config-max-retries').value = configs['max-retries'];
+        document.getElementById('config-backoff-base').value = configs['backoff-base'];
+      } catch (err) {
+        console.error('Failed to load configs:', err);
+      }
+    }
+
+    async function saveConfig(key) {
+      const inputId = key === 'max-retries' ? 'config-max-retries' : 'config-backoff-base';
+      const val = parseFloat(document.getElementById(inputId).value);
+      if (isNaN(val) || val <= 0) {
+        alert('Please enter a valid positive number');
+        return;
+      }
+      try {
+        const res = await fetch('/api/config/set', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key, value: String(val) })
+        });
+        if (res.ok) {
+          showNotification(`Config "${key}" set to ${val}.`, 'success');
+        } else {
+          alert('Failed to update config');
+        }
+      } catch (err) {
+        console.error('Save config error:', err);
+      }
+    }
+
+    // Stats visual cards
+    function updateStatsUI() {
+      if (!currentStats) return;
+
+      document.getElementById('count-workers').textContent = currentStats.activeWorkers;
+      document.getElementById('count-pending').textContent = currentStats.jobs.pending;
+      document.getElementById('count-processing').textContent = currentStats.jobs.processing;
+      document.getElementById('count-completed').textContent = currentStats.jobs.completed;
+      document.getElementById('count-failed').textContent = currentStats.jobs.failed;
+      document.getElementById('count-dead').textContent = currentStats.jobs.dead;
+
+      const total = currentStats.jobs.pending + currentStats.jobs.processing + currentStats.jobs.completed + currentStats.jobs.failed + currentStats.jobs.dead;
+      document.getElementById('total-jobs-label').textContent = `Total Jobs: ${total}`;
+
+      // Rebuild distribution ratio bar
+      const bar = document.getElementById('distribution-bar');
+      bar.innerHTML = '';
+
+      if (total === 0) {
+        bar.style.display = 'none';
+        return;
+      }
+      bar.style.display = 'flex';
+
+      const addSegment = (state, count) => {
+        if (count === 0) return;
+        const widthPercent = (count / total) * 100;
+        const segment = document.createElement('div');
+        segment.className = `ratio-bar-segment ${state}`;
+        segment.style.width = `${widthPercent}%`;
+        segment.title = `${state.toUpperCase()}: ${count} (${widthPercent.toFixed(1)}%)`;
+        bar.appendChild(segment);
+      };
+
+      addSegment('pending', currentStats.jobs.pending);
+      addSegment('processing', currentStats.jobs.processing);
+      addSegment('completed', currentStats.jobs.completed);
+      addSegment('failed', currentStats.jobs.failed);
+      addSegment('dead', currentStats.jobs.dead);
+    }
+
+    // Visual dial success rate gauge
+    function updateMetricsUI(metrics) {
+      if (!metrics) return;
+
+      const successRate = parseFloat(metrics.successRate) || 0;
+      document.getElementById('metrics-success-rate').textContent = `${successRate.toFixed(1)}%`;
+      document.getElementById('metrics-avg-latency').textContent = `${metrics.avgDuration}ms`;
+      document.getElementById('metrics-max-latency').textContent = `${metrics.maxDuration}ms`;
+      document.getElementById('metrics-attempts').textContent = metrics.totalAttempts;
+
+      // Update Conic stroke-dashoffset (total stroke length is ~377 px for radius=60)
+      const offset = 377 - (377 * successRate) / 100;
+      document.getElementById('metrics-success-gauge').style.strokeDashoffset = offset;
+    }
+
+    // Worker nodes management
+    function updateWorkersUI() {
+      const container = document.getElementById('workers-container');
+      if (currentWorkers.length === 0) {
+        container.innerHTML = '<div class="empty-state">No workers registered.</div>';
+        return;
+      }
+
+      container.innerHTML = currentWorkers.map(w => {
+        const lastHb = new Date(w.last_heartbeat).toLocaleTimeString();
+        let pulseClass = 'offline';
+        let statusText = 'Offline';
+        let actionBtn = '';
+
+        if (w.isActive) {
+          pulseClass = w.status === 'stopping' ? 'stopping' : '';
+          statusText = w.status === 'stopping' ? 'Stopping' : 'Active';
+          if (w.status !== 'stopping') {
+            actionBtn = `<button class="action-btn-sm delete" onclick="stopWorker(${w.pid})" title="Kill Worker Gracefully">&#x23f9;</button>`;
+          }
+        }
+
+        return `
+          <div class="worker-node">
+            <div class="worker-info">
+              <div class="worker-pid">
+                <span class="worker-pulse ${pulseClass}"></span>
+                <span>PID ${w.pid}</span>
+                <span style="font-size:0.7rem;opacity:0.6;font-weight:400;margin-left:0.25rem;">(${statusText})</span>
+              </div>
+              <div class="worker-meta">Heartbeat: ${lastHb}</div>
+            </div>
+            ${actionBtn}
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Jobs lists table
+    function renderJobsTable() {
+      const tbody = document.getElementById('jobs-table-body');
+      
+      const filtered = currentJobs.filter(job => {
+        // State Filter
+        if (activeFilter !== 'all' && job.state !== activeFilter) return false;
+        
+        // Search Filter
+        if (searchQuery) {
+          const matchId = job.id.toLowerCase().includes(searchQuery);
+          const matchCmd = job.command.toLowerCase().includes(searchQuery);
+          return matchId || matchCmd;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7">
+              <div class="empty-state" style="padding: 3rem 1.5rem; text-align: center;">
+                <div style="font-size: 2.2rem; margin-bottom: 0.75rem; filter: drop-shadow(0 0 10px rgba(108, 99, 255, 0.4));">📥</div>
+                <div style="font-weight: 700; margin-bottom: 0.35rem; color: white; font-family: var(--font-sans);">No enqueued jobs found</div>
+                <div style="font-size: 0.8rem; margin-bottom: 1.25rem; color: var(--text-muted); font-family: var(--font-sans);">Use the button to enqueue your first background task.</div>
+                <button class="btn primary" onclick="openEnqueueModal()" style="margin: 0 auto; font-size: 0.8rem; padding: 0.4rem 1rem;">Enqueue First Job</button>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(job => {
+        const scheduledTime = job.run_at ? new Date(job.run_at).toLocaleTimeString() : 'Immediate';
+        const timeoutText = job.timeout ? `${job.timeout}s` : 'None';
+        const priorityText = job.priority > 0 
+          ? `<span class="priority-badge">PRI ${job.priority}</span>` 
+          : `<span class="priority-badge normal">PRI 0</span>`;
+        
+        let stateBadgeText = job.state;
+        if (job.state === 'failed' && job.run_at) {
+          const secondsLeft = Math.ceil((new Date(job.run_at) - new Date()) / 1000);
+          if (secondsLeft > 0) {
+            stateBadgeText = `failed (retry in ${secondsLeft}s)`;
+          }
+        }
+        
+        let actionBtn = '';
+        if (job.state === 'dead') {
+          actionBtn = `<button class="action-btn-sm resurrect" onclick="resurrectJob('${escapeJsAttr(job.id)}')">Resurrect</button>`;
+        }
+        
+        return `
+          <tr>
+            <td>
+              <div class="job-id-cell">
+                <span class="job-id">${escapeHtml(job.id)}</span>
+                ${priorityText}
+              </div>
+            </td>
+            <td><div class="job-command" title="${escapeHtml(job.command)}">${escapeHtml(job.command)}</div></td>
+            <td><span class="badge ${job.state}">${stateBadgeText}</span></td>
+            <td style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text-muted);">${job.attempts}/${job.max_retries}</td>
+            <td style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text-muted);">${timeoutText}</td>
+            <td style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text-muted);">${scheduledTime}</td>
+            <td>
+              <div style="display: flex; gap: 0.35rem; justify-content: flex-end;">
+                <button class="action-btn-sm" onclick="viewLogs('${escapeJsAttr(job.id)}')">Logs</button>
+                ${actionBtn}
+                <button class="action-btn-sm delete" onclick="deleteJob('${escapeJsAttr(job.id)}')" title="Delete job permanently">&times;</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Modal forms controls
+    function openEnqueueModal() {
+      // Pre-fill a random or unique ID
+      document.getElementById('form-job-id').value = 'job-' + Math.random().toString(36).substring(2, 7);
+      document.getElementById('form-job-command').value = '';
+      document.getElementById('form-job-delay').value = '';
+      document.getElementById('enqueue-modal-overlay').classList.add('active');
+    }
+
+    function closeEnqueueModal() {
+      document.getElementById('enqueue-modal-overlay').classList.remove('active');
+    }
+
+    async function submitEnqueueJob() {
+      const id = document.getElementById('form-job-id').value.trim();
+      const command = document.getElementById('form-job-command').value.trim();
+      const priority = parseInt(document.getElementById('form-job-priority').value, 10) || 0;
+      const retries = parseInt(document.getElementById('form-job-retries').value, 10) || 0;
+      const timeoutInput = document.getElementById('form-job-timeout').value;
+      const delayInput = document.getElementById('form-job-delay').value.trim();
+
+      if (!id || !command) {
+        alert('Job ID and Command are required.');
+        return;
+      }
+
+      const payload = {
+        id,
+        command,
+        priority,
+        max_retries: retries,
+      };
+
+      if (timeoutInput) {
+        payload.timeout = parseInt(timeoutInput, 10);
+      }
+      if (delayInput) {
+        payload.run_at = delayInput;
+      }
+
+      try {
+        const res = await fetch('/api/enqueue', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          showNotification(`Job "${id}" enqueued successfully.`);
+          closeEnqueueModal();
+          fetchData();
+        } else {
+          const err = await res.text();
+          alert(`Failed to enqueue job: ${err}`);
+        }
+      } catch (err) {
+        console.error('Enqueue error:', err);
+      }
+    }
+
+    // Spawn / Stop Worker triggers
+    async function spawnWorker() {
+      try {
+        const res = await fetch('/api/workers/spawn', { method: 'POST' });
+        if (res.ok) {
+          const w = await res.json();
+          showNotification(`Spawned new worker PID ${w.pid}.`);
+          fetchData();
+        } else {
+          alert('Failed to spawn worker');
+        }
+      } catch (err) {
+        console.error('Spawn error:', err);
+      }
+    }
+
+    async function stopWorker(pid) {
+      try {
+        const res = await fetch(`/api/workers/stop?pid=${pid}`, { method: 'POST' });
+        if (res.ok) {
+          showNotification(`Sent stop signal to worker PID ${pid}.`);
+          fetchData();
+        } else {
+          alert('Failed to stop worker');
+        }
+      } catch (err) {
+        console.error('Stop worker error:', err);
+      }
+    }
+
+    // Job deletions
+    async function deleteJob(jobId) {
+      if (!confirm(`Are you sure you want to delete job "${jobId}" permanently?`)) return;
+
+      try {
+        const res = await fetch(`/api/delete?id=${encodeURIComponent(jobId)}`, { method: 'POST' });
+        if (res.ok) {
+          showNotification(`Job "${jobId}" deleted successfully.`);
+          fetchData();
+        } else {
+          alert('Failed to delete job');
+        }
+      } catch (err) {
+        console.error('Delete job error:', err);
+      }
+    }
+
+    // Queue purging
+    async function requestPurge(category) {
+      let confirmMsg = `Are you sure you want to purge all ${category} jobs?`;
+      if (category === 'all') {
+        confirmMsg = 'WARNING: Are you sure you want to purge the ENTIRE queue and all execution history?';
+      }
+      if (!confirm(confirmMsg)) return;
+
+      try {
+        const res = await fetch(`/api/purge?category=${category}`, { method: 'POST' });
+        if (res.ok) {
+          showNotification(`Purged ${category} jobs successfully.`);
+          fetchData();
+        } else {
+          alert('Purge request failed');
+        }
+      } catch (err) {
+        console.error('Purge error:', err);
+      }
+    }
+
+    // Job Resurrects
+    async function resurrectJob(jobId) {
+      try {
+        const res = await fetch(`/api/retry?id=${encodeURIComponent(jobId)}`, { method: 'POST' });
+        if (res.ok) {
+          showNotification(`Resurrected job "${jobId}".`);
+          fetchData();
+        } else {
+          alert('Failed to resurrect job');
+        }
+      } catch (err) {
+        console.error('Resurrect error:', err);
+      }
+    }
+
+    // Log terminal modals
+    async function viewLogs(jobId) {
+      const modal = document.getElementById('log-modal-overlay');
+      const title = document.getElementById('log-modal-title');
+      const terminal = document.getElementById('log-modal-terminal');
+      
+      title.textContent = `Job Console Output Logs ─ ${jobId}`;
+      terminal.innerHTML = '<div class="terminal-row" style="color:var(--text-muted);">Fetching attempt history...</div>';
+      modal.classList.add('active');
+      activeLogsText = '';
+
+      try {
+        const res = await fetch(`/api/logs?id=${encodeURIComponent(jobId)}`);
+        const logs = await res.json();
+        
+        if (logs.length === 0) {
+          terminal.innerHTML = '<div class="terminal-row empty-state">No execution logs registered for this job yet.</div>';
+          return;
+        }
+
+        activeLogsText = logs.map(l => {
+          const dateStr = new Date(l.created_at).toLocaleString();
+          const attemptsHeader = `=== ATTEMPT #${l.attempt} (Exit Code: ${l.exit_code}, Duration: ${l.duration_ms}ms, Time: ${dateStr}) ===`;
+          const stdoutText = l.stdout ? l.stdout : '(No stdout captured)';
+          const stderrText = l.stderr ? l.stderr : '';
+          return `${attemptsHeader}\nSTDOUT:\n${stdoutText}\n${stderrText ? 'STDERR:\n' + stderrText : ''}`;
+        }).join('\n\n');
+
+        terminal.innerHTML = logs.map(l => {
+          const dateStr = new Date(l.created_at).toLocaleString();
+          const exitStatus = l.exit_code === 0 
+            ? `<span style="color: var(--success)">Exit code 0 (Success)</span>` 
+            : `<span style="color: var(--error)">Exit code ${l.exit_code} (Failure)</span>`;
+          
+          return `
+            <div class="terminal-row attempt-banner">
+              &gt;&gt;&gt; ATTEMPT #${l.attempt} &bull; ${exitStatus} &bull; ${l.duration_ms}ms &bull; ${dateStr}
+            </div>
+            <div class="terminal-row stdout">${l.stdout ? escapeHtml(l.stdout) : '<span style="opacity:0.35;">(No stdout captured)</span>'}</div>
+            ${l.stderr ? `<div class="terminal-row stderr">${escapeHtml(l.stderr)}</div>` : ''}
+          `;
+        }).join('');
+
+      } catch (err) {
+        terminal.innerHTML = `<div class="terminal-row stderr">Failed to retrieve logs: ${err.message}</div>`;
+      }
+    }
+
+    function closeLogModal() {
+      document.getElementById('log-modal-overlay').classList.remove('active');
+    }
+
+    // Action Toast Notifications
+    function showNotification(text) {
+      const toast = document.getElementById('notification-toast');
+      document.getElementById('notification-text').textContent = text;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function escapeJsAttr(str) {
+      if (!str) return '';
+      const escapedJs = str.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      return escapeHtml(escapedJs);
+    }
+  </script>
+</body>
+</html>
