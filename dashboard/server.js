@@ -27,8 +27,33 @@ function readRequestBody(req) {
   });
 }
 
+const ADMIN_USER = process.env.ADMIN_USER || 'admin';
+const ADMIN_PASS = process.env.ADMIN_PASS || 'admin';
+
+function checkAuth(req) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return false;
+  
+  const parts = authHeader.split(' ');
+  if (parts.length !== 2 || parts[0] !== 'Basic') return false;
+  
+  const decoded = Buffer.from(parts[1], 'base64').toString('utf-8');
+  const [user, pass] = decoded.split(':');
+  return user === ADMIN_USER && pass === ADMIN_PASS;
+}
+
 export function startServer(port = 3000) {
   const server = http.createServer(async (req, res) => {
+    // Basic Auth Check
+    if (!checkAuth(req)) {
+      res.writeHead(401, {
+        'Content-Type': 'text/plain',
+        'WWW-Authenticate': 'Basic realm="QueueCTL Dashboard"'
+      });
+      res.end('Unauthorized');
+      return;
+    }
+
     const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     const pathname = parsedUrl.pathname;
 
