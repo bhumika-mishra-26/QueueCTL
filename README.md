@@ -323,7 +323,7 @@ npm test
 
 ## 📹 Demo & Submission Links
 
-*   🎥 **Recorded CLI Demo:** [Google Drive Link](#) — *replace with your real video link before submitting.*
+*   🎥 **Recorded CLI Demo:** [Google Drive Link](#) — https://docs.google.com/videos/d/1KDv087gzEdLfzROuk2ibP_D5VUDxhLhefyMnzetHaGU/edit?usp=sharing
 *   💻 **GitHub Repository:** [QueueCTL Repository](#) — https://github.com/bhumika-mishra-26/QueueCTL
 
 
