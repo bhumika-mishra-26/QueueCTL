@@ -165,30 +165,130 @@ Launches an interactive shell with arrow-key history and Tab autocompletion — 
 
 ---
 
-## 🏗️ Technical Implementation
+## 🏗️ Technical Implementation & System Architecture
+
+QueueCTL operates on a **decentralized worker model** backed by a single shared SQLite database in WAL (Write-Ahead Logging) mode.
+
+```mermaid
+flowchart TD
+    Client[CLI client / Web UI] -- "1. Enqueue Job" --> DB[(SQLite DB)]
+    DB -- "2. BEGIN IMMEDIATE Lock & claim" --> Worker1[Worker Process 1]
+    DB -- "2. BEGIN IMMEDIATE Lock & claim" --> Worker2[Worker Process 2]
+    Worker1 -- "3. Execute Command" --> Process1[Child Process]
+    Worker2 -- "3. Execute Command" --> Process2[Child Process]
+    Process1 -- "4. Exit Code & Logs" --> DB
+    Process2 -- "4. Exit Code & Logs" --> DB
+```
+
+### 💾 1. Data Persistence & Schema
+
+Persistence is handled by a single file database (`data/queuectl.db`). 
+
+#### Database Entity Relationships
 
 ```mermaid
 erDiagram
-    jobs { text id PK
+    jobs {
+        text id PK
         text command
         text state
         integer attempts
         integer max_retries
-        integer locked_by }
-    workers { integer pid PK
+        integer priority
+        text run_at
+        integer timeout
+        text error_message
+        text output
+        text started_at
+        integer duration_ms
+        integer locked_by
+        text created_at
+        text updated_at
+    }
+    workers {
+        integer pid PK
         text status
-        text last_heartbeat }
-    config { text key PK
-        text value }
-    job_logs { integer id PK
+        text last_heartbeat
+    }
+    config {
+        text key PK
+        text value
+    }
+    job_logs {
+        integer id PK
         text job_id
-        integer exit_code }
+        integer attempt
+        text stdout
+        text stderr
+        integer exit_code
+        integer duration_ms
+        text created_at
+    }
 ```
 
-- **Locking:** worker opens `BEGIN IMMEDIATE`, claims oldest ready `pending` job, sets `state=processing`+`locked_by=<pid>`, commits — other workers see it and skip.
-- **Self-healing:** heartbeats every 3s; silent >10s → `process.kill(pid, 0)` liveness check → dead worker's jobs reset to `pending`.
-- **Graceful shutdown:** stop polling → finish active job → unlock → exit.
-- **Persistent config:** `max-retries`/`backoff-base` live in SQLite, not code.
+*   **ACID Guarantees:** SQLite's WAL mode allows parallel reads and serial writes, eliminating data corruption under high process concurrency.
+
+---
+
+### 🔒 2. Concurrency & Claim Locking
+
+To support multiple parallel workers without double-processing or race conditions:
+
+1.  **Immediate Transaction:** Workers use `BEGIN IMMEDIATE` transactions to fetch and lock the next job. This locks the database write-path at the SQLite level.
+2.  **Claim & Lock Query:** The worker claims a job in a single transaction:
+    ```sql
+    -- 1. Query candidate job
+    SELECT * FROM jobs 
+    WHERE (state = 'pending' OR state = 'failed')
+      AND (run_at IS NULL OR run_at <= :now)
+    ORDER BY priority DESC, created_at ASC 
+    LIMIT 1;
+
+    -- 2. Lock the job to this process PID
+    UPDATE jobs 
+    SET state = 'processing', locked_by = :workerPid, updated_at = :now 
+    WHERE id = :jobId;
+    ```
+3.  **Release:** Once updated, the transaction commits, letting other workers query the next available job safely.
+
+---
+
+### 🔁 3. Retry Logic & Exponential Backoff
+
+When a job's child process fails (returns a non-zero exit code or times out):
+
+1.  **Count attempts:** `attempts` is incremented.
+2.  **Check limits:** If `attempts >= max_retries`, the state transitions to `dead` (DLQ).
+3.  **Compute delay:** If eligible for retry, the next execution time is scheduled exponentially:
+    $$\text{delay} = \text{backoff-base}^{\text{attempts}} \text{ seconds}$$
+    ```javascript
+    const delaySecs = Math.pow(backoffBase, attempts);
+    const runAt = new Date(Date.now() + delaySecs * 1000).toISOString();
+    ```
+4.  **Reset:** The job's state goes back to `failed` (which is treated as pending for execution after `run_at`).
+
+---
+
+### 🩹 4. Self-Healing & Liveness Monitoring
+
+If a worker process is forcefully terminated (e.g., `kill -9` or a sudden system crash) while processing a job, the job would remain locked in `processing` state forever. 
+
+QueueCTL resolves this using active heartbeats and liveness checking:
+
+1.  **Heartbeats:** Every active worker writes a timestamp to the `workers` table every 3 seconds.
+2.  **Liveness Verification:** Every polling iteration, active workers check for other workers whose heartbeats are older than 10 seconds.
+3.  **Reclaiming Jobs:**
+    *   The worker checks if the crashed PID is active in the OS using `process.kill(pid, 0)`.
+    *   If the OS reports that the PID is dead, the crashed worker is marked as `dead`, and all jobs locked by it are reset to `pending` with `locked_by = NULL`.
+
+---
+
+### 🛑 5. Graceful Shutdown
+
+Workers listen for `SIGINT` (Ctrl+C) and `SIGTERM` signals:
+
+*   **Completion:** The worker stops polling for new jobs but lets any currently running child process complete execution.
+*   **Cleanup:** It writes execution logs to the database, updates the worker status in the DB, and terminates cleanly.
 
 ---
 
@@ -224,7 +324,8 @@ npm test
 ## 📹 Demo & Submission Links
 
 *   🎥 **Recorded CLI Demo:** [Google Drive Link](#) — *replace with your real video link before submitting.*
-*   💻 **GitHub Repository:** [QueueCTL Repository](#) — https://github.com/bhumika-mishra-26/QueueCTL
+*   💻 **GitHub Repository:** [QueueCTL Repository](#) — *replace with your public repository URL.*
+*   📐 **Architecture Design Document:** [design.md](design.md) — *explaining database schema, concurrency claim-locks, exponential backoffs, and liveness monitoring.*
 
 ---
 
