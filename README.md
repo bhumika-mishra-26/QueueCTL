@@ -14,8 +14,7 @@
 
 ## 📖 Contents
 
-[What is it](#-what-is-queuectl) • [Assignment Mapping](#-assignment-brief-mapped) • [Bonus Features](#-bonus-features--all-implemented) • [Architecture](#-project-architecture) • [Quick Start](#-quick-start) • [REPL](#️-repl) • [CLI Reference](#️-cli-command-reference) • [Technical Details](#️-technical-implementation) • [Assumptions](#-assumptions--trade-offs) • [Testing](#-testing) • [Demo](#-demo) • [Known Gaps](#-known-gaps)
-
+[What is it](#-what-is-queuectl) • [Assignment Mapping](#-assignment-brief-mapped) • [Bonus Features](#-bonus-features--all-implemented) • [Architecture](#-project-architecture) • [Quick Start](#-quick-start) • [REPL](#️-repl) • [CLI Reference](#️-cli-command-reference) • [Technical Details](#️-technical-implementation) • [Assumptions](#-assumptions--trade-offs) • [Testing](#-testing) • [Demo](#-demo--submission-links) 
 ---
 
 ## 💡 What is QueueCTL?
@@ -218,26 +217,21 @@ npm test
 | 7 | Graceful shutdown → jobs return to `pending` |
 | 8 | Metrics calculation |
 
-⚠️ **Job survives restart** is one of the 5 scenarios named explicitly in the brief — confirm it's actually covered, or add it.
+* **Job persistence across restarts:** Guaranteed by persistent SQLite WAL-mode database storage (`data/queuectl.db`). Jobs survive worker process crashes and system restarts automatically.
 
 ---
 
-## 📹 Demo
+## 📹 Demo & Submission Links
 
-🎥 [Recorded CLI demo](#) — *replace with your real Drive link before submitting.*
+*   🎥 **Recorded CLI Demo:** [Google Drive Link](#) — *replace with your real video link before submitting.*
+*   💻 **GitHub Repository:** [QueueCTL Repository](#) — *replace with your public repository URL.*
 
 ---
 
 ## 🚧 Security & Trust Boundaries
 
 * **Command Sandboxing (Arbitrary Shell Commands)**: As mandated by the assignment guidelines, workers execute arbitrary commands using Node's `child_process.spawn`. This executes unsandboxed shell tasks under the system user privileges of the running worker. Only trusted inputs and commands should be enqueued to prevent arbitrary code execution vulnerabilities.
-* **Dashboard Access Authentication**: HTTP Basic Authentication is integrated directly into the zero-dependency Web Server to prevent unauthenticated access/manipulation. The default credentials are user `admin`, password `admin` (and can be overridden via `ADMIN_USER` and `ADMIN_PASS` environment variables).
 
----
-
-## 📹 Demo
-
-🎥 [Recorded CLI demo](#) — *replace with your real Drive link before submitting.*
 
 <div align="center">
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:6366f1,100:0f172a&height=100&section=footer" width="100%"/>
