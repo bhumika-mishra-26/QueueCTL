@@ -224,7 +224,7 @@ npm test
 ## 📹 Demo & Submission Links
 
 *   🎥 **Recorded CLI Demo:** [Google Drive Link](#) — *replace with your real video link before submitting.*
-*   💻 **GitHub Repository:** [QueueCTL Repository](#) — *replace with your public repository URL.*
+*   💻 **GitHub Repository:** [QueueCTL Repository](#) — https://github.com/bhumika-mishra-26/QueueCTL
 
 ---
 
