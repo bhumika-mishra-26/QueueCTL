@@ -1,6 +1,196 @@
-// AURIX Blue Agent Verified Remediation Patch
-// Target: dashboard/public/index.html
-// Fix for Cross-Site Scripting (XSS)
+drop-in remediation patch:
+File: dashboard/public/index.html
+Vulnerability: Cross-Site Scripting (XSS)
+Vulnerable code: container.innerHTML = currentWorkers.map(w => {
+Recommended fix: Sanitize dynamic HTML inputs using DOMPurify or rely on React's automatic JSX escaping.
+Show diff style patch (-) 
+removed (+
+) 
+added. 
+Output 
+ONLY 
+code 
+in 
+triple 
+backticks.
 
- // REMEDIATED BY AURIX BLUE AGENT:
- Sanitize dynamic HTML inputs using DOMPurify or rely on React's automatic JSX escaping.
+"""
+# 
+def 
+patch_code
+():
+    # 
+this 
+function 
+simulates 
+the 
+remediation 
+patch 
+for 
+the 
+XSS 
+vulnerability 
+in 
+dashboard
+/
+public
+/
+index
+.html
+    # 
+The 
+original 
+vulnerable 
+code 
+was 
+directly 
+inserting 
+user-controllable 
+data 
+via 
+innerHTML
+    # 
+We 
+replace 
+this 
+by 
+sanitizing 
+the 
+HTML 
+using 
+DOM
+Purify 
+(assumed 
+to 
+be 
+loaded 
+via 
+a 
+script 
+tag 
+in 
+the 
+HTML 
+file
+)
+    
+    # 
+Since 
+we 
+cannot 
+directly 
+modify 
+the 
+file 
+via 
+Python 
+string 
+manipulation 
+of 
+the 
+original 
+HTML
+, 
+we 
+provide 
+a 
+diff-style 
+patch 
+as 
+a 
+string.
+    
+    # 
+In 
+a 
+real 
+scenario
+, 
+this 
+would 
+be 
+applied 
+to 
+the 
+file 
+content.
+    
+    # 
+For 
+this 
+task
+, 
+we 
+just 
+return 
+the 
+patch 
+structure 
+as 
+a 
+string 
+representation.
+    
+    # 
+The 
+patch 
+adds 
+a 
+sanitization 
+step 
+using 
+DOM
+Purify.
+    
+    # 
+Assuming 
+DOM
+Purify 
+is 
+already 
+included 
+in 
+the 
+page
+, 
+we 
+wrap 
+the 
+innerHTML 
+assignment 
+with 
+DOM
+Purify
+.sf
+anit
+ize
+.
+    
+    # 
+If 
+DOM
+Purify 
+is 
+not 
+included
+, 
+the 
+patch 
+would 
+also 
+need 
+to 
+add 
+the 
+script 
+tag
+, 
+but 
+since 
+the 
+task 
+focuses 
+on 
+the 
+vulnerable 
+line
